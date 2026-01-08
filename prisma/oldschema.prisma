@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CORREDOR
+}
+
+enum ClientType {
+  MAYORISTA
+  MINORISTA
+  FINAL
+}
+
+enum PriceTier {
+  MAYOR
+  MINOR
+  FINAL
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
+
+enum RouteStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PriceAdjustmentType {
+  NONE
+  FIXED_PRICE
+  PERCENTAGE_OFF
+  PERCENTAGE_MARKUP
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      Role @default(CORREDOR)
+  isActive  Boolean  @default(true)
+  commissionRate Float @default(0)
+  isRunner  Boolean  @default(false) // ¿Puede tomar pedidos?
+  isDriver  Boolean  @default(false) // ¿Puede ver rutas?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders        Order[]       @relation("OrderCreatedBy")
+  routes        DeliveryRoute[]
+  logs          LogEntry[]
+  notifications Notification[]
+  createdClients Customer[] @relation("ClientCreator")
+}
+
+model Customer {
+  id              String      @id @default(cuid())
+  firstName       String
+  lastName        String
+  businessName    String?
+  dniCuit         String      @unique
+  phone           String
+  email           String?
+  address         String
+  city            String
+  type            ClientType
+  specialDiscount Float       @default(0)
+  isDeleted       Boolean     @default(false)
+  deletedAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orders Order[]
+  createdById String?   // Puede ser nulo para clientes viejos
+  createdBy   User?     @relation("ClientCreator", fields: [createdById], references: [id])
+}
+
+model Product {
+  id           String    @id @default(cuid())
+  code         String?   @unique
+  name         String
+  description  String?
+  category     String
+  currentStock Int
+  minStock     Int
+  unit         String
+  imageUrl     String?
+  priceMayor   Float
+  priceMinor   Float
+  priceFinal   Float
+  isActive     Boolean   @default(true)
+  isDeleted    Boolean   @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  orderItems OrderItem[]
+}
+
+model Order {
+  id               String         @id @default(cuid())
+  orderNumber      String         @unique
+  customerId       String
+  customer         Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  userId           String
+  user             User           @relation("OrderCreatedBy", fields: [userId], references: [id], onDelete: Restrict)
+  shippingAddress  String?        // La dirección donde se entrega ESTE pedido
+  deliveryCode     String?        // Código de seguridad (ej: 4589)
+  requiresCode     Boolean        @default(false) 
+  deliveryRouteId  String?        
+  deliveryRoute    DeliveryRoute? @relation(fields: [deliveryRouteId], references: [id], onDelete: SetNull)
+  appliedPriceTier PriceTier
+  subtotal         Float
+  discount         Float          @default(0)
+  total            Float
+  status           OrderStatus    @default(DRAFT)
+  deliveryDate     DateTime?
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  items OrderItem[]
+  adminFee        Float     @default(0)
+}
+
+model OrderItem {
+  id                   String              @id @default(cuid())
+  orderId              String
+  order                Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId            String
+  product              Product             @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity             Int
+  basePriceTier        PriceTier           @default(MAYOR)
+  basePrice            Float
+  priceAdjustmentType  PriceAdjustmentType @default(NONE)
+  priceAdjustmentValue Float?
+  unitPrice            Float
+  subtotal             Float
+  priceNote            String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model DeliveryRoute {
+  id          String      @id @default(cuid())
+  routeNumber String?      @unique
+  date        DateTime
+  driverId    String
+  driver      User        @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  status      RouteStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orders Order[]
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  type        String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model LogEntry {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  action    String
+  details   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  type      String
+}
