@@ -11,20 +11,21 @@ export default async function RutasPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div><h1 className="text-3xl font-bold font-heading text-brand-primary">Rutas de Entrega</h1><p className="text-gray-500">Logística y despachos</p></div>
-        <Link href="/admin/rutas/nueva" className="bg-brand-accent hover:bg-brand-primary text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium shadow-sm"><Plus size={20} /> Nueva Ruta</Link>
+        <div><h1 className="text-3xl font-bold font-heading text-white">Rutas de Entrega</h1><p className="text-brand-muted">Logística y despachos</p></div>
+        <Link href="/admin/rutas/nueva" className="bg-brand-primary text-brand-dark px-4 py-2 rounded-lg flex items-center gap-2 font-bold shadow-neon"><Plus size={20} /> Nueva Ruta</Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {routes.map(route => (
-          <Link key={route.id} href={`/admin/rutas/${route.id}`} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group">
+          <Link key={route.id} href={`/admin/rutas/${route.id}`} className="bg-brand-card p-6 rounded-xl shadow-lg border border-brand-border hover:border-brand-primary transition-all group">
             <div className="flex justify-between items-start mb-4">
-              <div className="p-3 bg-brand-light/10 text-brand-primary rounded-lg group-hover:bg-brand-primary group-hover:text-white transition-colors"><Truck size={24} /></div>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${route.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>{route.status}</span>
+              <div className="p-3 bg-brand-dark rounded-lg text-brand-primary group-hover:text-white transition-colors"><Truck size={24} /></div>
+              <span className={`px-3 py-1 rounded text-xs font-bold ${route.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-green-500/20 text-green-400'}`}>{route.status}</span>
             </div>
-            <h3 className="text-xl font-bold text-brand-dark mb-1">{route.routeNumber}</h3>
-            <div className="text-sm text-gray-500 space-y-1">
+            <h3 className="text-xl font-bold text-white mb-1">{route.routeNumber || "Sin Nombre"}</h3>
+            <div className="text-sm text-brand-muted space-y-1">
               <p className="flex items-center gap-2"><Calendar size={14} /> {route.date.toLocaleDateString()}</p>
-              <p>Chofer: <span className="font-medium text-brand-dark">{route.driver.firstName} {route.driver.lastName}</span></p>
+              {/* CORRECCIÓN: Usamos Optional Chaining (?.) y Fallback (||) */}
+              <p>Chofer: <span className="font-medium text-white">{route.driver?.firstName || "Sin"} {route.driver?.lastName || "Asignar"}</span></p>
               <p className="text-brand-accent font-medium">{route._count.orders} pedidos asignados</p>
             </div>
           </Link>

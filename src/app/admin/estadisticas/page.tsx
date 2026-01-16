@@ -16,9 +16,12 @@ export default async function EstadisticasPage({ searchParams }: { searchParams:
   // Calcular Fecha de Inicio
   const today = new Date();
   let startDate = subDays(today, 30);
+  
+  
   if (period === "7") startDate = subDays(today, 7);
   if (period === "90") startDate = subDays(today, 90);
   if (period === "ALL") startDate = new Date(2020, 0, 1);
+
 
   // Construir clausula WHERE dinámica
   const whereClause: any = {

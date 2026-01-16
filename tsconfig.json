@@ -35,7 +35,7 @@
     ".next/types/**/*.ts",
     "src",
     ".next/dev/types/**/*.ts"
-, "generador.js", "updateandfixsidebar.js", "updateprint.js", "updatesidebarenvios.js", "increasecaja.js"  ],
+, "generador.js", "updateandfixsidebar.js", "updateprint.js", "generatorlist/updatesidebarenvios.js", "generatorlist/increasecaja.js", "generator.js", "updateduplicated.js", "fiss.js"  ],
   "exclude": [
     "node_modules"
   ]

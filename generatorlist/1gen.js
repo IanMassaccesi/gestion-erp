@@ -1,4 +1,8 @@
-import { prisma } from "@/lib/prisma";
+const fs = require('fs');
+const path = require('path');
+
+const files = {
+  'src/app/admin/clientes/[id]/page.tsx': `import { prisma } from "@/lib/prisma";
 import { updateClient } from "@/actions/clients-actions";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
@@ -18,7 +22,7 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
         <Link href="/admin/clientes" className="p-2 hover:bg-brand-card rounded-full text-brand-muted"><ArrowLeft size={24} /></Link>
         <h1 className="text-2xl font-bold font-heading text-white">Editar Cliente</h1>
       </div>
-      
+
       <form action={updateClientWithId} className="bg-brand-card p-8 rounded-xl shadow-lg border border-brand-border space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -63,4 +67,17 @@ export default async function EditarClientePage({ params }: { params: Promise<{ 
       </form>
     </div>
   );
+}`
+};
+
+function createFiles() {
+  console.log('🚀 Corrigiendo Errores de TypeScript en Edición de Clientes...');
+  for (const [filePath, content] of Object.entries(files)) {
+    const absolutePath = path.join(process.cwd(), filePath);
+    const dir = path.dirname(absolutePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(absolutePath, content);
+    console.log(`✅ Corregido: ${filePath}`);
+  }
 }
+createFiles();

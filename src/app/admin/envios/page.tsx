@@ -1,94 +1,38 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
-import { Truck, Package, Printer, ArrowRight, MapPin } from "lucide-react";
 import { createShipment } from "@/actions/shipping-actions";
+import { Truck, MapPin, Package, User } from "lucide-react";
 
 export default async function EnviosPage() {
-  // 1. Pedidos LISTOS para despachar (Confirmados pero sin envío)
-  const pendingOrders = await prisma.order.findMany({
+  const ordersReadyToShip = await prisma.order.findMany({
     where: { 
-      status: "CONFIRMED",
-      shipment: null // Que no tengan envío creado aún
+      status: { in: ['NO_PAGO', 'PAGO', 'FIADO', 'CONFIRMED'] }, // Incluimos CONFIRMED por si acaso
+      shippingAddress: { not: null }, 
+      shipment: null
     },
-    include: { customer: true }
-  });
-
-  // 2. Envíos Activos
-  const activeShipments = await prisma.shipment.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: { 
-      order: { include: { customer: true } } 
-    }
+    include: { customer: true }, // FIX: Include customer
+    orderBy: { createdAt: 'desc' }
   });
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold font-heading text-white">Centro de Envíos</h1>
-        <p className="text-brand-muted">Despacho y etiquetado de paquetes</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* COLUMNA 1: POR DESPACHAR */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-brand-primary flex items-center gap-2">
-            <Package /> Pendientes de Despacho
-          </h2>
-          {pendingOrders.length === 0 ? (
-            <div className="p-8 bg-brand-card border border-brand-border rounded-xl text-center text-brand-muted">
-              No hay pedidos confirmados pendientes.
+    <div className="space-y-6 text-slate-200">
+      <h1 className="text-3xl font-bold font-heading text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Gestión de Envíos</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {ordersReadyToShip.map(order => (
+          <div key={order.id} className="bg-slate-900 p-6 rounded-xl border border-slate-800 shadow-lg">
+            <div className="flex justify-between items-start mb-4">
+               <div><h3 className="font-bold text-white text-lg">#{order.orderNumber}</h3><p className="text-slate-500 text-sm">{new Date(order.createdAt).toLocaleDateString()}</p></div>
+               <span className="bg-cyan-900/30 text-cyan-400 px-2 py-1 rounded text-xs font-bold border border-cyan-800">{order.status}</span>
             </div>
-          ) : (
-            pendingOrders.map(order => (
-              <div key={order.id} className="bg-brand-card p-4 rounded-xl border border-brand-border flex justify-between items-center">
-                <div>
-                  <p className="font-bold text-white">{order.customer.firstName} {order.customer.lastName}</p>
-                  <p className="text-sm text-brand-muted">Pedido #{order.orderNumber}</p>
-                  <p className="text-xs text-brand-muted mt-1 flex items-center gap-1"><MapPin size={12}/> {order.shippingAddress || "Sin dirección"}</p>
-                </div>
-                <form action={async () => { 'use server'; await createShipment(order.id); }}>
-                  <button className="bg-brand-primary text-brand-dark px-3 py-2 rounded-lg text-sm font-bold hover:bg-cyan-400 transition-colors flex items-center gap-2">
-                    Generar Etiqueta <ArrowRight size={16} />
-                  </button>
-                </form>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* COLUMNA 2: EN SEGUIMIENTO */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-brand-accent flex items-center gap-2">
-            <Truck /> Envíos Activos
-          </h2>
-          {activeShipments.map(shipment => (
-            <div key={shipment.id} className="bg-brand-card p-4 rounded-xl border border-brand-border group hover:border-brand-accent/50 transition-colors">
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <span className="text-2xl font-mono font-bold text-white tracking-wider">{shipment.trackingCode}</span>
-                  <p className="text-sm text-brand-muted">{shipment.order.customer.firstName} {shipment.order.customer.lastName}</p>
-                </div>
-                <div className="text-right">
-                  <span className={`px-2 py-1 rounded text-xs font-bold ${shipment.status === 'ENTREGADO' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                    {shipment.status}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex justify-end pt-3 border-t border-brand-border">
-                <Link 
-                  href={`/admin/envios/${shipment.id}/etiqueta`} 
-                  target="_blank"
-                  className="flex items-center gap-2 text-sm text-brand-text hover:text-brand-primary transition-colors"
-                >
-                  <Printer size={16} /> Imprimir Etiqueta
-                </Link>
-              </div>
+            <div className="space-y-3 mb-6">
+                <div className="flex items-center gap-2 text-slate-300"><User size={16}/><span className="font-bold">{order.customer.firstName} {order.customer.lastName}</span></div>
+                <div className="flex items-start gap-2 text-slate-400 text-sm"><MapPin size={16} className="mt-1 shrink-0"/><span>{order.shippingAddress}</span></div>
             </div>
-          ))}
-        </div>
-
+            <form action={async (formData) => { 'use server'; await createShipment(formData); }}>
+                <input type="hidden" name="orderId" value={order.id} />
+                <button className="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all"><Truck size={20} /> Generar Etiqueta</button>
+            </form>
+          </div>
+        ))}
       </div>
     </div>
   );

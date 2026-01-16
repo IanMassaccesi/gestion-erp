@@ -10,7 +10,8 @@ export default function NuevoEmpleadoPage() {
         <h1 className="text-2xl font-bold font-heading text-white">Nuevo Empleado</h1>
       </div>
 
-      <form action={createStaff} className="bg-brand-card p-8 rounded-xl shadow-lg border border-brand-border space-y-6">
+      {/* CORRECCIÓN: Wrapper asíncrono para satisfacer TypeScript */}
+      <form action={async (formData) => { 'use server'; await createStaff(formData); }} className="bg-brand-card p-8 rounded-xl shadow-lg border border-brand-border space-y-6">
         <div className="grid grid-cols-2 gap-4">
           <div><label className="text-sm font-medium text-brand-muted mb-1 block">Nombre</label><input name="firstName" required className="w-full p-3 bg-brand-input border border-brand-border rounded-lg text-white" /></div>
           <div><label className="text-sm font-medium text-brand-muted mb-1 block">Apellido</label><input name="lastName" required className="w-full p-3 bg-brand-input border border-brand-border rounded-lg text-white" /></div>
@@ -33,7 +34,6 @@ export default function NuevoEmpleadoPage() {
                     <Percent className="absolute left-3 top-3 text-brand-muted" size={16} />
                     <input type="number" step="0.1" name="commissionRate" defaultValue="0" className="w-full pl-10 p-2 bg-brand-input border border-brand-border rounded text-white" />
                 </div>
-                <p className="text-xs text-brand-muted mt-1">Este porcentaje se aplicará automáticamente a sus pedidos.</p>
             </div>
           </div>
         </div>

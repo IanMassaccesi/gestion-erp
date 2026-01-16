@@ -4,7 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-export async function createShipment(orderId: string) {
+// CORRECCIÓN: Ahora recibe FormData, no string
+export async function createShipment(formData: FormData) {
+  const orderId = formData.get("orderId") as string;
+
+  if (!orderId) return { error: "ID de pedido no encontrado" };
+
   // 1. Generar Código de Seguimiento (Simulación AR)
   const timestamp = Date.now().toString().slice(-8);
   const random = Math.floor(Math.random() * 99).toString().padStart(2, '0');

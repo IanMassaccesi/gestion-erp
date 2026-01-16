@@ -7,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- ENUMS ---
 enum Role {
   ADMIN
   CORREDOR
@@ -34,6 +33,10 @@ enum OrderStatus {
   DELIVERING
   DELIVERED
   CANCELLED
+  NO_PAGO
+  PAGO
+  FIADO
+  IMPRESO
 }
 
 enum RouteStatus {
@@ -49,7 +52,12 @@ enum PriceAdjustmentType {
   PERCENTAGE_MARKUP
 }
 
-// --- USUARIOS Y CLIENTES ---
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  prefix    String   
+  createdAt DateTime @default(now())
+}
 
 model User {
   id             String   @id @default(cuid())
@@ -59,23 +67,27 @@ model User {
   lastName       String
   role           Role     @default(CORREDOR)
   isActive       Boolean  @default(true)
-  
   commissionRate Float    @default(0)
   isRunner       Boolean  @default(false)
   isDriver       Boolean  @default(false)
-  
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  
-  // Relaciones
   orders         Order[]         @relation("OrderCreatedBy")
   routes         DeliveryRoute[]
   logs           LogEntry[]
   notifications  Notification[]
   createdClients Customer[]      @relation("ClientCreator")
-  
-  // Relación Finanzas (Caja)
   shifts         CashShift[]
+  preferences    NotificationPreference?
+}
+
+model NotificationPreference {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifyOrders Boolean @default(true)
+  notifyStock  Boolean @default(true)
+  notifySystem Boolean @default(false)
 }
 
 model Customer {
@@ -90,19 +102,14 @@ model Customer {
   city            String?
   type            ClientType  @default(FINAL)
   specialDiscount Float       @default(0)
-  
   isDeleted       Boolean     @default(false)
   deletedAt       DateTime?
-  
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
-  
   orders          Order[]
   createdById     String?
   createdBy       User?       @relation("ClientCreator", fields: [createdById], references: [id])
 }
-
-// --- PRODUCTOS ---
 
 model Product {
   id           String    @id @default(cuid())
@@ -110,61 +117,49 @@ model Product {
   name         String
   description  String?
   category     String?
-  currentStock Int
+  
+  // STOCK
+  trackStock   Boolean   @default(true) // NUEVO CAMPO
+  currentStock Int       @default(0)
   minStock     Int       @default(0)
+  
   unit         String    @default("UNIDAD")
   imageUrl     String?
-  
   priceMayor   Float
   priceMinor   Float
   priceFinal   Float
-  
   isActive     Boolean   @default(true)
   isDeleted    Boolean   @default(false)
   deletedAt    DateTime?
-  
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  
   orderItems   OrderItem[]
 }
-
-// --- PEDIDOS Y LOGÍSTICA ---
 
 model Order {
   id               String         @id @default(cuid())
   orderNumber      String         @unique
-  
   customerId       String
   customer         Customer       @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  
   userId           String
   user             User           @relation("OrderCreatedBy", fields: [userId], references: [id], onDelete: Restrict)
-  
   shippingAddress  String?
   deliveryCode     String?
   requiresCode     Boolean        @default(false) 
-  
   deliveryRouteId  String?        
   deliveryRoute    DeliveryRoute? @relation(fields: [deliveryRouteId], references: [id], onDelete: SetNull)
-  
   appliedPriceTier PriceTier
   subtotal         Float
   discount         Float          @default(0)
   adminFee         Float          @default(0)
   total            Float
-  
   status           OrderStatus    @default(PENDING)
   deliveryDate     DateTime?
   notes            String?
-  
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
-  
   items            OrderItem[]
-  transactions     CashTransaction[] // Pagos vinculados
-  
-  // Envío (Relación 1 a 1 opcional)
+  transactions     CashTransaction[]
   shipment         Shipment?
 }
 
@@ -172,12 +167,9 @@ model OrderItem {
   id                   String              @id @default(cuid())
   orderId              String
   order                Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
   productId            String
   product              Product             @relation(fields: [productId], references: [id], onDelete: Restrict)
-  
   quantity             Int
-  
   basePriceTier        PriceTier           @default(MAYOR)
   basePrice            Float
   priceAdjustmentType  PriceAdjustmentType @default(NONE)
@@ -185,7 +177,6 @@ model OrderItem {
   unitPrice            Float
   subtotal             Float
   priceNote            String?
-  
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
 }
@@ -194,52 +185,37 @@ model DeliveryRoute {
   id          String      @id @default(cuid())
   routeNumber String?     @unique
   date        DateTime
-  
   driverId    String?
   driver      User?       @relation(fields: [driverId], references: [id], onDelete: SetNull)
-  
   status      RouteStatus @default(PENDING)
   notes       String?
-  
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
-  
   orders      Order[]
 }
-
-// --- ENVÍOS (Módulo Nuevo) ---
 
 model Shipment {
   id            String   @id @default(cuid())
   trackingCode  String   @unique
   provider      String   @default("CORREO ARGENTINO")
   status        String   @default("PREPARACION")
-  
   orderId       String   @unique
   order         Order    @relation(fields: [orderId], references: [id])
-  
   labelUrl      String?
-  
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
-
-// --- FINANZAS (Caja) ---
 
 model CashShift {
   id             String    @id @default(cuid())
   openedAt       DateTime  @default(now())
   closedAt       DateTime?
-  
   startAmount    Float
   endAmount      Float?
   systemAmount   Float?
   difference     Float?
-  
   status         String    @default("OPEN")
-  
   transactions   CashTransaction[]
-  
   openedById     String
   openedBy       User      @relation(fields: [openedById], references: [id])
 }
@@ -251,15 +227,11 @@ model CashTransaction {
   type           String    // IN, OUT
   category       String
   description    String?
-  
   shiftId        String
   shift          CashShift @relation(fields: [shiftId], references: [id])
-  
   orderId        String?
   order          Order?    @relation(fields: [orderId], references: [id])
 }
-
-// --- SISTEMA ---
 
 model Notification {
   id          String   @id @default(cuid())
@@ -267,7 +239,7 @@ model Notification {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
   description String
-  type        String
+  type        String   
   isRead      Boolean  @default(false)
   createdAt   DateTime @default(now())
 }

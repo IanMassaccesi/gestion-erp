@@ -1,4 +1,11 @@
-'use client'
+const fs = require('fs');
+const path = require('path');
+
+const files = {
+  // ==========================================
+  // FORMULARIO DE PEDIDO (Con Input Manual y Categorías)
+  // ==========================================
+  'src/components/orders/OrderFormMobile.tsx': `'use client'
 import { useState, useEffect } from "react";
 import { createOrder } from "@/actions/orders-actions";
 import { Plus, Minus, Search, Save, AlertCircle, Percent, X } from "lucide-react";
@@ -115,7 +122,7 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
           <div className="flex justify-between items-center mb-4">
               <button onClick={()=>setStep(1)} className="text-brand-muted font-bold hover:text-white transition-colors">← Cambiar Cliente</button>
               <button onClick={()=>setStep(3)} className="bg-brand-primary hover:bg-cyan-400 text-brand-dark px-4 py-2 rounded-lg font-bold shadow-neon transition-all flex items-center gap-2">
-                 Ver Carrito <span className="bg-brand-dark text-brand-primary px-2 py-0.5 rounded text-xs">$${total.toFixed(0)}</span>
+                 Ver Carrito <span className="bg-brand-dark text-brand-primary px-2 py-0.5 rounded text-xs">\$\${total.toFixed(0)}</span>
               </button>
           </div>
           
@@ -136,7 +143,7 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
               <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
                   <button 
                     onClick={() => setSelectedCategory("")}
-                    className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${!selectedCategory ? 'bg-brand-primary text-brand-dark' : 'bg-brand-card text-brand-muted border border-brand-border'}`}
+                    className={\`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold transition-colors \${!selectedCategory ? 'bg-brand-primary text-brand-dark' : 'bg-brand-card text-brand-muted border border-brand-border'}\`}
                   >
                     TODOS
                   </button>
@@ -144,7 +151,7 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
                     <button 
                         key={cat as string}
                         onClick={() => setSelectedCategory(cat as string)}
-                        className={`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${selectedCategory === cat ? 'bg-brand-primary text-brand-dark' : 'bg-brand-card text-brand-muted border border-brand-border'}`}
+                        className={\`whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold transition-colors \${selectedCategory === cat ? 'bg-brand-primary text-brand-dark' : 'bg-brand-card text-brand-muted border border-brand-border'}\`}
                     >
                         {cat as string}
                     </button>
@@ -157,10 +164,10 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
               {filteredProducts.map(p => {
                   const item = cart.find(i=>i.id===p.id);
                   return (
-                      <div key={p.id} className={`p-3 rounded-xl border flex justify-between items-center transition-all ${item ? 'bg-brand-primary/10 border-brand-primary/50' : 'bg-brand-card border-brand-border'}`}>
+                      <div key={p.id} className={\`p-3 rounded-xl border flex justify-between items-center transition-all \${item ? 'bg-brand-primary/10 border-brand-primary/50' : 'bg-brand-card border-brand-border'}\`}>
                           <div className="flex-1">
                               <div className="text-white font-bold leading-tight">{p.name}</div>
-                              <div className="text-brand-primary font-mono text-sm mt-1">$${p.priceFinal}</div>
+                              <div className="text-brand-primary font-mono text-sm mt-1">\$\${p.priceFinal}</div>
                               {p.code && <div className="text-[10px] text-brand-muted">{p.code}</div>}
                           </div>
                           
@@ -211,7 +218,7 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
                        <span className="text-brand-muted">x</span>
                        <span className="truncate max-w-[180px]">{item.name}</span>
                    </div>
-                   <span className="font-mono">$${(item.qty * item.price).toFixed(0)}</span>
+                   <span className="font-mono">\$\${(item.qty * item.price).toFixed(0)}</span>
                 </div>
              ))}
           </div>
@@ -219,7 +226,7 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
           <div className="space-y-3">
               <div className="flex justify-between text-brand-muted text-lg">
                   <span>Subtotal</span>
-                  <span>$${subtotal.toFixed(2)}</span>
+                  <span>\$\${subtotal.toFixed(2)}</span>
               </div>
               
               <div className="bg-brand-dark/50 p-3 rounded-lg border border-brand-border">
@@ -227,7 +234,7 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
                       <label className="text-sm font-bold text-brand-accent flex items-center gap-2">
                           <AlertCircle size={14} /> Comisión
                       </label>
-                      <span className="font-bold text-brand-accent">$${adminFee.toFixed(2)}</span>
+                      <span className="font-bold text-brand-accent">\$\${adminFee.toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                       <Percent size={16} className="text-brand-muted" />
@@ -236,14 +243,14 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
                           value={feePercent}
                           onChange={(e) => isAdmin && setFeePercent(parseFloat(e.target.value) || 0)}
                           disabled={!isAdmin}
-                          className={`w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-white text-right font-mono ${!isAdmin ? 'opacity-50' : 'focus:border-brand-primary'}`}
+                          className={\`w-full bg-brand-input border border-brand-border rounded px-2 py-1 text-white text-right font-mono \${!isAdmin ? 'opacity-50' : 'focus:border-brand-primary'}\`}
                       />
                   </div>
               </div>
 
               <div className="flex justify-between text-3xl font-bold text-white pt-2 border-t border-brand-border">
                   <span>TOTAL</span>
-                  <span className="text-brand-primary">$${total.toFixed(0)}</span>
+                  <span className="text-brand-primary">\$\${total.toFixed(0)}</span>
               </div>
           </div>
        </div>
@@ -253,4 +260,17 @@ export function OrderFormMobile({ clients, products, currentUser }: { clients: a
        </button>
     </div>
   );
+}`
+};
+
+function createFiles() {
+  console.log('🚀 Actualizando Formulario de Pedidos (Input Manual + Categorías)...');
+  for (const [filePath, content] of Object.entries(files)) {
+    const absolutePath = path.join(process.cwd(), filePath);
+    const dir = path.dirname(absolutePath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(absolutePath, content);
+    console.log(`✅ Actualizado: ${filePath}`);
+  }
 }
+createFiles();

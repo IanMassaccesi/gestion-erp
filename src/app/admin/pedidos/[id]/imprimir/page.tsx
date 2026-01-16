@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import { PrintButton } from "@/components/ui/PrintButton";
+// Importamos el nuevo componente
+import { PrintControls } from "@/components/ui/PrintControls";
 
 export default async function ImprimirPedidoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,18 +24,20 @@ export default async function ImprimirPedidoPage({ params }: { params: Promise<{
 
   return (
     <div className="bg-gray-100 min-h-screen p-4 md:p-8 font-sans text-black">
-      {/* Botonera solo visible en pantalla */}
-      <div className="print:hidden max-w-[21cm] mx-auto mb-6 flex justify-between items-center bg-white p-4 rounded-lg shadow border border-gray-200">
+      
+      {/* --- ZONA DE CONTROLES (No sale en la impresión) --- */}
+      <div className="print:hidden max-w-[21cm] mx-auto mb-6 flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-lg shadow border border-gray-200 gap-4">
         <div>
-           <p className="text-sm font-bold text-gray-700">Vista Previa</p>
-           <p className="text-xs text-gray-500">Formato Factura C</p>
+           <p className="text-sm font-bold text-gray-700">Panel de Impresión</p>
+           <p className="text-xs text-gray-500">Seleccione formato</p>
         </div>
-        {/* Usamos el componente cliente aquí */}
-        <PrintButton />
+        
+        {/* Aquí pasamos la orden completa para que el Ticket tenga datos */}
+        <PrintControls order={order} />
       </div>
 
-      {/* Hoja A4 */}
-      <div className="bg-white max-w-[21cm] mx-auto p-8 shadow-lg print:shadow-none print:p-0">
+      {/* --- HOJA A4 (Lo que se imprime al dar click en Factura) --- */}
+      <div className="bg-white max-w-[21cm] mx-auto p-8 shadow-lg print:shadow-none print:p-0 print:m-0">
         
         {/* ENCABEZADO TIPO AFIP */}
         <div className="border border-black relative mb-4">
@@ -70,12 +73,12 @@ export default async function ImprimirPedidoPage({ params }: { params: Promise<{
             </div>
             <div className="flex mb-1">
                 <span className="font-bold w-24">Domicilio:</span>
-                <span>{order.customer.address}</span>
+                <span>{order.customer.address || '-'}</span>
             </div>
             <div className="flex">
                 <div className="w-1/2 flex">
                     <span className="font-bold w-24">CUIT/DNI:</span>
-                    <span>{order.customer.dniCuit}</span>
+                    <span>{order.customer.dniCuit || '-'}</span>
                 </div>
             </div>
         </div>

@@ -5,10 +5,9 @@ export function PrintButton() {
   return (
     <button 
       onClick={() => window.print()} 
-      className="bg-brand-primary text-brand-dark px-4 py-2 rounded font-bold shadow-neon hover:bg-cyan-400 transition-colors flex items-center gap-2 print:hidden"
+      className="bg-[#0E386F] text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:bg-[#092446]"
     >
-      <Printer size={18} />
-      Imprimir Pantalla
+      <Printer /> Imprimir Hoja
     </button>
   );
 }
